@@ -1,17 +1,17 @@
 use crate::{ Heap, HeapResult };
 use std::cmp::Ord;
-pub struct BinaryHeap<T: Ord> {
-    heap: Vec<T>,
-    policy: fn(&T, &T) -> bool,
+pub struct BinaryHeap<K: Ord, V> {
+    heap: Vec<(K, V)>,
+    policy: fn(&K, &K) -> bool,
 }
 
-impl <T: Ord> Heap<T> for BinaryHeap<T> {
-    fn push(&mut self, val: T) -> HeapResult {
-        self.heap.push(val);
+impl <K: Ord, V> Heap<K, V> for BinaryHeap<K, V> {
+    fn push(&mut self, key: K, val: V) -> HeapResult {
+        self.heap.push((key, val));
         self.heapify_button_up();
         Ok(())
     }
-    fn pop(&mut self) -> Option<T> {
+    fn pop(&mut self) -> Option<(K, V)> {
         let n = self.heap.len();
         if n == 0 {
             None
@@ -29,9 +29,9 @@ impl <T: Ord> Heap<T> for BinaryHeap<T> {
     }
 }
 
-impl <T: Ord> BinaryHeap<T> {
+impl <K: Ord, V> BinaryHeap<K, V> {
     pub fn new_min() -> Self {
-        let policy = |a: &T, b: &T| -> bool {
+        let policy = |a: &K, b: &K| -> bool {
             *a < *b
         };
         Self {
@@ -40,7 +40,7 @@ impl <T: Ord> BinaryHeap<T> {
         }
     }
     pub fn new_max() -> Self {
-        let policy = |a: &T, b: &T| -> bool {
+        let policy = |a: &K, b: &K| -> bool {
             *a > *b
         };
         Self {
@@ -90,7 +90,7 @@ impl <T: Ord> BinaryHeap<T> {
     /// Check whether "i" should be heigher than "j"
     fn should_heigher(&self, i: usize, j: usize) -> bool {
         let heap = &self.heap;
-        (self.policy)(&heap[i], &heap[j])
+        (self.policy)(&heap[i].0, &heap[j].0)
     }
 }
 
