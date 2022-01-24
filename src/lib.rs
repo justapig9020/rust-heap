@@ -1,5 +1,8 @@
 mod binary;
+mod binomial;
+
 use std::cmp::Ord;
+use std::hash::Hash;
 pub type HeapResult = Result<(), ()>;
 pub trait Heap<K: Ord, V> {
     fn push(&mut self, key: K, val: V) -> HeapResult;
@@ -43,10 +46,10 @@ mod heap {
             assert_eq!(v.to_string(), val);
         }
     }
-   #[cfg(test)]
+    #[cfg(test)]
     mod binary_heap {
-        use crate::binary::BinaryHeap;
         use super::*;
+        use crate::binary::BinaryHeap;
         #[test]
         fn is_empty_max() {
             let uut = BinaryHeap::new_max();
@@ -78,4 +81,11 @@ mod heap {
             push_and_pop_max_tester(&mut uut);
         }
     }
+}
+
+pub trait ModifiableHeap<K, V>: Heap<K, V>
+where
+    K: Ord + Hash,
+{
+    fn modify(&mut self, key: K, new_val: V) -> HeapResult;
 }
