@@ -1,3 +1,4 @@
+#![feature(linked_list_cursors)]
 mod binary;
 mod binomial;
 
@@ -78,6 +79,42 @@ mod heap {
         #[test]
         fn push_and_pop_max() {
             let mut uut = BinaryHeap::new_max();
+            push_and_pop_max_tester(&mut uut);
+        }
+    }
+
+    #[cfg(test)]
+    mod binomial_heap {
+        use super::*;
+        use crate::binomial::BinomialHeap;
+        #[test]
+        fn is_empty_max() {
+            let uut = BinomialHeap::new_max();
+            is_empty_tester(&uut);
+        }
+        #[test]
+        fn is_empty_min() {
+            let uut = BinomialHeap::new_min();
+            is_empty_tester(&uut);
+        }
+        #[test]
+        fn isnt_empty_max() {
+            let mut uut = BinomialHeap::new_max();
+            isnt_empty_tester(&mut uut);
+        }
+        #[test]
+        fn isnt_empty_min() {
+            let mut uut = BinomialHeap::new_min();
+            isnt_empty_tester(&mut uut);
+        }
+        #[test]
+        fn push_and_pop_min() {
+            let mut uut = BinomialHeap::new_min();
+            push_and_pop_min_tester(&mut uut);
+        }
+        #[test]
+        fn push_and_pop_max() {
+            let mut uut = BinomialHeap::new_max();
             push_and_pop_max_tester(&mut uut);
         }
     }
