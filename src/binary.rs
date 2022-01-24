@@ -2,6 +2,7 @@ use crate::{ Heap, HeapResult };
 use std::cmp::Ord;
 pub struct BinaryHeap<T: Ord> {
     heap: Vec<T>,
+    policy: fn(&T, &T) -> bool,
 }
 
 impl <T: Ord> Heap<T> for BinaryHeap<T> {
@@ -30,22 +31,29 @@ impl <T: Ord> Heap<T> for BinaryHeap<T> {
 
 impl <T: Ord> BinaryHeap<T> {
     pub fn new_min() -> Self {
+        let policy = |a: &T, b: &T| -> bool {
+            *a < *b
+        };
         Self {
-            heap: vec![]
+            heap: vec![],
+            policy,
         }
     }
     pub fn new_max() -> Self {
+        let policy = |a: &T, b: &T| -> bool {
+            *a > *b
+        };
         Self {
-            heap: vec![]
+            heap: vec![],
+            policy,
         }
     }
     fn heapify_button_up(&mut self) {
-        let heap = &mut self.heap;
-        let mut curr = heap.len() - 1;
+        let mut curr = self.heap.len() - 1;
         while curr > 0 {
             let parent = parent_of(curr);
-            if heap[parent] > heap[curr] {
-                heap.swap(parent, curr);
+            if !self.should_heigher(parent, curr) {
+                self.heap.swap(parent, curr);
                 curr = parent;
             } else {
                 break;
@@ -82,7 +90,7 @@ impl <T: Ord> BinaryHeap<T> {
     /// Check whether "i" should be heigher than "j"
     fn should_heigher(&self, i: usize, j: usize) -> bool {
         let heap = &self.heap;
-        heap[i] <= heap[j]
+        (self.policy)(&heap[i], &heap[j])
     }
 }
 

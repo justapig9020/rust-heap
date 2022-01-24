@@ -29,6 +29,18 @@ mod heap {
             assert_eq!(*v, poped);
         }
     }
+    fn push_and_pop_max_tester(uut: &mut dyn Heap<i32>) {
+        let mut values = [5, 3, 2, 4, 1];
+        for v in values.iter() {
+            uut.push(*v).expect("Push failed");
+        }
+        values.sort();
+        values.reverse();
+        for v in values.iter() {
+            let poped = uut.pop().expect("Out of value");
+            assert_eq!(*v, poped);
+        }
+    }
     #[cfg(test)]
     mod binary_heap {
         use crate::binary::BinaryHeap;
@@ -57,6 +69,11 @@ mod heap {
         fn push_and_pop_min() {
             let mut uut = BinaryHeap::new_min();
             push_and_pop_min_tester(&mut uut);
+        }
+        #[test]
+        fn push_and_pop_max() {
+            let mut uut = BinaryHeap::new_max();
+            push_and_pop_max_tester(&mut uut);
         }
     }
 }
