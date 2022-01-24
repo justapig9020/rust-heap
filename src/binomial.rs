@@ -1,6 +1,6 @@
 use crate::{Heap, HeapResult, ModifiableHeap};
 use std::cell::RefCell;
-use std::cmp::Ord;
+use std::cmp::{ Ord, Eq };
 use std::collections::{HashMap, LinkedList};
 use std::hash::Hash;
 use std::marker::Copy;
@@ -56,7 +56,7 @@ where
 {
     total: usize,
     top: Option<BinomialTreeRef<K, V>>,
-    hash: HashMap<K, BinomialTreeRef<K, V>>,
+    hash: HashMap<K, Vec<BinomialTreeRef<K, V>>>,
     trees: LinkedList<BinomialTreeRef<K, V>>,
     /// Return true is first argument is better than second.
     /// Return false otherwise.
@@ -153,10 +153,15 @@ where
 impl<K, V> Heap<K, V> for BinomialHeap<K, V>
 where
     K: Ord + Hash + Copy,
+    V: Eq
 {
     fn push(&mut self, key: K, val: V) -> HeapResult {
         let new_tree = Rc::new(RefCell::new(BinomialTree::new(key, val)));
-        self.hash.insert(key, new_tree.clone());
+        if let Some(vec) = self.hash.get_mut(&key) {
+            vec.push(new_tree.clone());
+        } else {
+           self.hash.insert(key, vec![new_tree.clone()]);
+        }
         self.top = self
             .top
             .take()
@@ -171,7 +176,11 @@ where
         let mut subtrees = top.borrow_mut().leak_subtrees();
         self.trees.append(&mut subtrees);
         self.heapify();
-        self.hash.remove(&top.borrow().key)?;
+        let mut vec = self.hash.remove(&top.borrow().key)?;
+        vec.retain(|b| b.borrow().val != top.borrow().val);
+        if !vec.is_empty() {
+            self.hash.insert(top.borrow().key, vec);
+        }
         let cell = Rc::try_unwrap(top).ok()?;
         let tree = cell.into_inner();
         self.total -= 1;
@@ -185,6 +194,7 @@ where
 impl<K, V> ModifiableHeap<K, V> for BinomialHeap<K, V>
 where
     K: Ord + Hash + Copy,
+    V: Eq
 {
     fn modify(&mut self, key: K, new_val: V) -> HeapResult {
         Ok(())

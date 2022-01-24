@@ -117,6 +117,24 @@ mod heap {
             let mut uut = BinomialHeap::new_max();
             push_and_pop_max_tester(&mut uut);
         }
+        #[test]
+        fn repeat_key() {
+            let mut uut = BinomialHeap::new_max();
+            let pair: Vec<(usize, String)> = [
+                (1, "key1"),
+                (1, "key2"),
+                (2, "key3"),
+                (2, "key4"),
+            ].iter().map(|(i, s)| (*i, (*s).to_string())).collect();
+            for (k, v) in pair.iter() {
+                uut.push(*k, v.clone());
+            }
+            let mut got = vec![];
+            while !uut.is_empty() {
+                got.push(uut.pop().unwrap());
+            }
+            assert!(pair.iter().all(|p| got.contains(p)));
+        }
     }
 }
 
