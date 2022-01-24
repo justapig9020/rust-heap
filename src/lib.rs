@@ -120,12 +120,10 @@ mod heap {
         #[test]
         fn repeat_key() {
             let mut uut = BinomialHeap::new_max();
-            let pair: Vec<(usize, String)> = [
-                (1, "key1"),
-                (1, "key2"),
-                (2, "key3"),
-                (2, "key4"),
-            ].iter().map(|(i, s)| (*i, (*s).to_string())).collect();
+            let pair: Vec<(usize, String)> = [(1, "key1"), (1, "key2"), (2, "key3"), (2, "key4")]
+                .iter()
+                .map(|(i, s)| (*i, (*s).to_string()))
+                .collect();
             for (k, v) in pair.iter() {
                 uut.push(*k, v.clone());
             }
@@ -138,9 +136,42 @@ mod heap {
     }
 }
 
+#[cfg(test)]
+mod modifiable_heap {
+    use super::*;
+    // Minheap
+    fn modify_key_tester(uut: &mut dyn ModifiableHeap<i32, String>) {
+        let mut list: Vec<(i32, String)> = (0..10).map(|i| (i, i.to_string())).collect();
+        for (k, v) in list.iter() {
+            uut.push(*k, v.clone());
+        }
+        let mut cnt = 10;
+        for (k, v) in list.iter_mut() {
+            uut.modify_key(k, v, cnt);
+            *k = cnt;
+            cnt -= 1;
+        }
+        list.sort_by_key(|(k, _)| *k);
+        for (k, v) in list {
+            let (key, val) = uut.pop().unwrap();
+            assert_eq!(k, key);
+            assert_eq!(v, val);
+        }
+    }
+    #[cfg(test)]
+    mod binomial_heap {
+        use super::*;
+        use crate::binomial::BinomialHeap;
+        #[test]
+        fn modify_key() {
+            let mut uut = BinomialHeap::new_min();
+            modify_key_tester(&mut uut);
+        }
+    }
+}
 pub trait ModifiableHeap<K, V>: Heap<K, V>
 where
     K: Ord + Hash,
 {
-    fn modify(&mut self, key: K, new_val: V) -> HeapResult;
+    fn modify_key(&mut self, old_key: &K, val: &V, new_key: K) -> HeapResult;
 }

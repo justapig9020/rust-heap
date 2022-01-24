@@ -1,6 +1,6 @@
 use crate::{Heap, HeapResult, ModifiableHeap};
 use std::cell::RefCell;
-use std::cmp::{ Ord, Eq };
+use std::cmp::{Eq, Ord};
 use std::collections::{HashMap, LinkedList};
 use std::hash::Hash;
 use std::marker::Copy;
@@ -36,6 +36,9 @@ impl<K: Ord, V> BinomialTree<K, V> {
     fn into_key_pair(self) -> (K, V) {
         (self.key, self.val)
     }
+    fn get_parent(&self) -> Option<BinomialTreeRef<K, V>> {
+        self.parent.clone()
+    }
 }
 
 fn union<K: Ord, V>(
@@ -65,8 +68,17 @@ where
 
 impl<K, V> BinomialHeap<K, V>
 where
-    K: Ord + Hash,
+    K: Ord + Hash + Copy,
+    V: Eq,
 {
+    pub fn new_min() -> Self {
+        let policy = |a: &K, b: &K| -> bool { *a < *b };
+        BinomialHeap::new_with_policy(policy)
+    }
+    pub fn new_max() -> Self {
+        let policy = |a: &K, b: &K| -> bool { *a > *b };
+        BinomialHeap::new_with_policy(policy)
+    }
     fn new_with_policy(policy: fn(&K, &K) -> bool) -> Self {
         Self {
             total: 0,
@@ -76,20 +88,15 @@ where
             policy,
         }
     }
-    pub fn new_min() -> Self {
-        let policy = |a: &K, b: &K| -> bool { *a < *b };
-        BinomialHeap::new_with_policy(policy)
-    }
-    pub fn new_max() -> Self {
-        let policy = |a: &K, b: &K| -> bool { *a > *b };
-        BinomialHeap::new_with_policy(policy)
+    fn is_heigher(&self, a: &BinomialTreeRef<K, V>, b: &BinomialTreeRef<K, V>) -> bool {
+        (self.policy)(&a.borrow().key, &b.borrow().key)
     }
     fn compare<'a>(
         &self,
         a: &'a BinomialTreeRef<K, V>,
         b: &'a BinomialTreeRef<K, V>,
     ) -> (&'a BinomialTreeRef<K, V>, &'a BinomialTreeRef<K, V>) {
-        if (self.policy)(&a.borrow().key, &b.borrow().key) {
+        if self.is_heigher(a, b) {
             (a, b)
         } else {
             (b, a)
@@ -148,25 +155,61 @@ where
             self.trees.push_back(root);
         }
     }
+    fn find_pair(&self, key: &K, val: &V) -> Option<BinomialTreeRef<K, V>> {
+        let matches = self.hash.get(key)?;
+        let got = matches.iter().find(|root| root.borrow().val == *val)?;
+        Some(got.clone())
+    }
+    fn heapify_button_up(&mut self, modified: BinomialTreeRef<K, V>) {
+        use std::mem;
+        let mut curr = modified;
+        loop {
+            let parent = if let Some(p) = curr.borrow().get_parent() {
+                p
+            } else {
+                self.update_top(&curr);
+                break;
+            };
+            if self.is_heigher(&parent, &curr) {
+                break;
+            }
+            mem::swap(&mut parent.borrow_mut().key, &mut curr.borrow_mut().key);
+            mem::swap(&mut parent.borrow_mut().val, &mut curr.borrow_mut().val);
+            curr = parent;
+        }
+    }
+    fn update_top(&mut self, challenger: &BinomialTreeRef<K, V>) {
+        self.top = self
+            .top
+            .take()
+            .and_then(|top| Some(self.heigher(&top, challenger)))
+            .or(Some(challenger.clone()));
+    }
+    fn hash_insert(&mut self, key: &K, root: &BinomialTreeRef<K, V>) {
+        if let Some(vec) = self.hash.get_mut(&key) {
+            vec.push(root.clone());
+        } else {
+            self.hash.insert(*key, vec![root.clone()]);
+        }
+    }
+    fn modify_hash_mapping(&mut self, root: &BinomialTreeRef<K, V>, new_key: &K) -> Result<(), ()> {
+        let old_key = &root.borrow().key;
+        let vec = self.hash.get_mut(old_key).ok_or(())?;
+        vec.retain(|r| r.borrow().key != *old_key);
+        self.hash_insert(new_key, root);
+        Ok(())
+    }
 }
 
 impl<K, V> Heap<K, V> for BinomialHeap<K, V>
 where
     K: Ord + Hash + Copy,
-    V: Eq
+    V: Eq,
 {
     fn push(&mut self, key: K, val: V) -> HeapResult {
         let new_tree = Rc::new(RefCell::new(BinomialTree::new(key, val)));
-        if let Some(vec) = self.hash.get_mut(&key) {
-            vec.push(new_tree.clone());
-        } else {
-           self.hash.insert(key, vec![new_tree.clone()]);
-        }
-        self.top = self
-            .top
-            .take()
-            .and_then(|top| Some(self.heigher(&top, &new_tree)))
-            .or(Some(new_tree.clone()));
+        self.hash_insert(&key, &new_tree);
+        self.update_top(&new_tree);
         self.trees.push_back(new_tree);
         self.total += 1;
         Ok(())
@@ -194,9 +237,13 @@ where
 impl<K, V> ModifiableHeap<K, V> for BinomialHeap<K, V>
 where
     K: Ord + Hash + Copy,
-    V: Eq
+    V: Eq,
 {
-    fn modify(&mut self, key: K, new_val: V) -> HeapResult {
+    fn modify_key(&mut self, old_key: &K, val: &V, new_key: K) -> HeapResult {
+        let modify = self.find_pair(old_key, val).ok_or(())?;
+        self.modify_hash_mapping(&modify, &new_key)?;
+        modify.borrow_mut().key = new_key;
+        self.heapify_button_up(modify);
         Ok(())
     }
 }
