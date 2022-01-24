@@ -1,11 +1,11 @@
-use crate::{ Heap, HeapResult };
+use crate::{Heap, HeapResult};
 use std::cmp::Ord;
 pub struct BinaryHeap<K: Ord, V> {
     heap: Vec<(K, V)>,
     policy: fn(&K, &K) -> bool,
 }
 
-impl <K: Ord, V> Heap<K, V> for BinaryHeap<K, V> {
+impl<K: Ord, V> Heap<K, V> for BinaryHeap<K, V> {
     fn push(&mut self, key: K, val: V) -> HeapResult {
         self.heap.push((key, val));
         self.heapify_button_up();
@@ -29,20 +29,16 @@ impl <K: Ord, V> Heap<K, V> for BinaryHeap<K, V> {
     }
 }
 
-impl <K: Ord, V> BinaryHeap<K, V> {
+impl<K: Ord, V> BinaryHeap<K, V> {
     pub fn new_min() -> Self {
-        let policy = |a: &K, b: &K| -> bool {
-            *a < *b
-        };
+        let policy = |a: &K, b: &K| -> bool { *a < *b };
         Self {
             heap: vec![],
             policy,
         }
     }
     pub fn new_max() -> Self {
-        let policy = |a: &K, b: &K| -> bool {
-            *a > *b
-        };
+        let policy = |a: &K, b: &K| -> bool { *a > *b };
         Self {
             heap: vec![],
             policy,
