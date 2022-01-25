@@ -27,6 +27,14 @@ impl<K: Ord, V> Heap<K, V> for BinaryHeap<K, V> {
     fn is_empty(&self) -> bool {
         self.heap.is_empty()
     }
+    fn peek(&self) -> Option<(&K, &V)> {
+        if self.heap.is_empty() {
+            None
+        } else {
+            let (k, v) = &self.heap[0];
+            Some((k, v))
+        }
+    }
 }
 
 impl<K: Ord, V> BinaryHeap<K, V> {

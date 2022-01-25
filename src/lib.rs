@@ -9,6 +9,7 @@ pub trait Heap<K: Ord, V> {
     fn push(&mut self, key: K, val: V) -> HeapResult;
     fn pop(&mut self) -> Option<(K, V)>;
     fn is_empty(&self) -> bool;
+    fn peek(&self) -> Option<(&K, &V)>;
 }
 
 #[cfg(test)]
@@ -47,6 +48,24 @@ mod heap {
             assert_eq!(v.to_string(), val);
         }
     }
+    fn pop_empty_tester(uut: &mut dyn Heap<i32, ()>) {
+        let got = uut.pop();
+        assert!(got.is_none());
+    }
+    fn peek_some_tester(uut: &mut dyn Heap<i32, String>) {
+        let pairs: Vec<(i32, String)> = (0..10).map(|i| (i, i.to_string())).collect();
+        for (k, v) in pairs.iter() {
+            uut.push(*k, v.clone());
+        }
+        let (k, v) = &pairs[9];
+        let (key, val) = uut.peek().expect("Expect Some, got None");
+        assert_eq!(*k, *key);
+        assert_eq!(*v, *val);
+    }
+    fn peek_none_tester(uut: &dyn Heap<i32, String>) {
+        let got = uut.peek();
+        assert!(got.is_none());
+    }
     #[cfg(test)]
     mod binary_heap {
         use super::*;
@@ -80,6 +99,21 @@ mod heap {
         fn push_and_pop_max() {
             let mut uut = BinaryHeap::new_max();
             push_and_pop_max_tester(&mut uut);
+        }
+        #[test]
+        fn pop_empty() {
+            let mut uut = BinaryHeap::new_max();
+            pop_empty_tester(&mut uut);
+        }
+        #[test]
+        fn peek_some() {
+            let mut uut = BinaryHeap::new_max();
+            peek_some_tester(&mut uut);
+        }
+        #[test]
+        fn peek_empty() {
+            let mut uut = BinaryHeap::new_max();
+            peek_none_tester(&mut uut);
         }
     }
 
@@ -118,6 +152,11 @@ mod heap {
             push_and_pop_max_tester(&mut uut);
         }
         #[test]
+        fn pop_empty() {
+            let mut uut = BinomialHeap::new_max();
+            pop_empty_tester(&mut uut);
+        }
+        #[test]
         fn repeat_key() {
             let mut uut = BinomialHeap::new_max();
             let pair: Vec<(usize, String)> = [(1, "key1"), (1, "key2"), (2, "key3"), (2, "key4")]
@@ -132,6 +171,16 @@ mod heap {
                 got.push(uut.pop().unwrap());
             }
             assert!(pair.iter().all(|p| got.contains(p)));
+        }
+        #[test]
+        fn peek_some() {
+            let mut uut = BinomialHeap::new_max();
+            peek_some_tester(&mut uut);
+        }
+        #[test]
+        fn peek_empty() {
+            let mut uut = BinomialHeap::new_max();
+            peek_none_tester(&mut uut);
         }
     }
 }

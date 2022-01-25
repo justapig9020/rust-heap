@@ -232,6 +232,16 @@ where
     fn is_empty(&self) -> bool {
         self.trees.is_empty()
     }
+    fn peek(&self) -> Option<(&K, &V)> {
+        self.top.as_ref().map(|top| {
+            let top_ptr = top.as_ptr();
+            // SAFETY: returned pair is behind immutable reference of self.
+            //         Since key and value will only be modified in function with mutable reference of self,
+            //         the returned reference are safed.
+            let top_ref = unsafe { top_ptr.as_ref() }.unwrap();
+            (&top_ref.key, &top_ref.val)
+        })
+    }
 }
 
 impl<K, V> ModifiableHeap<K, V> for BinomialHeap<K, V>
