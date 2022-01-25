@@ -229,6 +229,9 @@ where
         self.total -= 1;
         Some(tree.into_key_pair())
     }
+    fn len(&self) -> usize {
+        self.total
+    }
     fn is_empty(&self) -> bool {
         self.trees.is_empty()
     }

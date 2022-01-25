@@ -24,6 +24,9 @@ impl<K: Ord, V> Heap<K, V> for BinaryHeap<K, V> {
             ret
         }
     }
+    fn len(&self) -> usize {
+        self.heap.len()
+    }
     fn is_empty(&self) -> bool {
         self.heap.is_empty()
     }

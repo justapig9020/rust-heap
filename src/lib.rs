@@ -8,6 +8,7 @@ pub type HeapResult = Result<(), ()>;
 pub trait Heap<K: Ord, V> {
     fn push(&mut self, key: K, val: V) -> HeapResult;
     fn pop(&mut self) -> Option<(K, V)>;
+    fn len(&self) -> usize;
     fn is_empty(&self) -> bool;
     fn peek(&self) -> Option<(&K, &V)>;
 }
@@ -66,6 +67,28 @@ mod heap {
         let got = uut.peek();
         assert!(got.is_none());
     }
+    fn len_after_push_tester(uut: &mut dyn Heap<usize, ()>) {
+        assert_eq!(uut.len(), 0);
+        let len: usize = 10;
+        for i in 0..len {
+            uut.push(i, ());
+        }
+        assert_eq!(uut.len(), len);
+    }
+    fn len_after_pop_tester(uut: &mut dyn Heap<usize, ()>) {
+        assert_eq!(uut.len(), 0);
+        let len: usize = 10;
+        for i in 0..len {
+            uut.push(i, ());
+        }
+        for i in 1..=len {
+            uut.pop();
+            assert_eq!(uut.len(), len - i);
+        }
+    }
+    fn len_empty_tester(uut: &dyn Heap<usize, ()>) {
+        assert_eq!(uut.len(), 0);
+    }
     #[cfg(test)]
     mod binary_heap {
         use super::*;
@@ -114,6 +137,21 @@ mod heap {
         fn peek_empty() {
             let mut uut = BinaryHeap::new_max();
             peek_none_tester(&mut uut);
+        }
+        #[test]
+        fn len_after_push() {
+            let mut uut = BinaryHeap::new_max();
+            len_after_push_tester(&mut uut);
+        }
+        #[test]
+        fn len_after_pop() {
+            let mut uut = BinaryHeap::new_max();
+            len_after_pop_tester(&mut uut);
+        }
+        #[test]
+        fn len_empty() {
+            let uut = BinaryHeap::new_max();
+            len_empty_tester(&uut);
         }
     }
 
@@ -181,6 +219,21 @@ mod heap {
         fn peek_empty() {
             let mut uut = BinomialHeap::new_max();
             peek_none_tester(&mut uut);
+        }
+        #[test]
+        fn len_after_push() {
+            let mut uut = BinomialHeap::new_max();
+            len_after_push_tester(&mut uut);
+        }
+        #[test]
+        fn len_after_pop() {
+            let mut uut = BinomialHeap::new_max();
+            len_after_pop_tester(&mut uut);
+        }
+        #[test]
+        fn len_empty() {
+            let uut = BinomialHeap::new_max();
+            len_empty_tester(&uut);
         }
     }
 }
