@@ -1,6 +1,6 @@
 #![feature(linked_list_cursors)]
-mod binary;
-mod binomial;
+pub mod binary;
+pub mod binomial;
 
 use std::cmp::Ord;
 use std::hash::Hash;
